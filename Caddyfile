@@ -1,7 +1,0 @@
-proxy.iptv01.asia {
-    reverse_proxy localhost:80
-}
-
-proxy-web.iptv01.asia {
-    reverse_proxy localhost:8191
-}
