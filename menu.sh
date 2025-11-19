@@ -11,7 +11,7 @@ while true; do
     echo ""
     echo "===== MENU PROXY WEB ====="
     echo "Escolha uma opção:"
-    echo "1) Git Reset Hard 2 (Update Local Force)"
+    echo "1) Git Reset Hard (Update Local Force)"
     echo "2) Docker Build"
     echo "3) Docker Run"
     echo "4) Docker Stop"
