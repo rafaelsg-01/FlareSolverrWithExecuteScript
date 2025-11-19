@@ -78,7 +78,7 @@ def test_browser_installation():
 
 def index_endpoint() -> IndexResponse:
     res = IndexResponse({})
-    res.msg = "FlareSolverr is ready! 3"
+    res.msg = "FlareSolverr is ready! 4"
     res.version = utils.get_flaresolverr_version()
     res.userAgent = utils.get_user_agent()
     return res
