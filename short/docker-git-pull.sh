@@ -1,8 +1,8 @@
 #!/bin/bash
 cd $HOME/content-proxy-web || true
 
-echo "Git Pull (Update Local) rafaelsg-01/FlareSolverrWithExecuteScript..."
+echo "Git Reset Hard (Update Local Force) rafaelsg-01/FlareSolverrWithExecuteScript..."
 
-git pull
+git reset --hard
 
-echo "Git Pull repositório local atualizado."
+echo "Git Reset Hard (Update Local Force) atualizado."
