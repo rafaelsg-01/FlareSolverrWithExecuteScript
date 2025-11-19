@@ -8,7 +8,6 @@ docker run -d \
     --network caddy-net \
     --env-file ./.env \
     -e LOG_LEVEL=info \
-    -e PROMETHEUS_ENABLED=true \
     --restart unless-stopped \
     build-content-proxy-web
 
