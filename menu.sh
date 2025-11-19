@@ -2,7 +2,7 @@
 cd $HOME/content-proxy-web || true
 
 # Dar permissão de execução:
-# cd $HOME/content-proxy-web && chmod +x menu.sh && cd $HOME/content-proxy-web/short && chmod +x *.sh
+cd $HOME/content-proxy-web && chmod +x menu.sh && cd $HOME/content-proxy-web/short && chmod +x *.sh
 
 # Caminho para os scripts
 SCRIPTS_DIR="./short"
