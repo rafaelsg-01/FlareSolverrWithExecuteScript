@@ -181,7 +181,7 @@ def _cmd_request_post(req: V1RequestBase) -> V1ResponseBase:
 def _cmd_sessions_create(req: V1RequestBase) -> V1ResponseBase:
     logging.debug("Creating new session...")
 
-    session, fresh = SESSIONS_STORAGE.create(session_id=req.session, proxy=req.proxy)
+    session, fresh = SESSIONS_STORAGE.create(session_id=req.session, proxy=req.proxy, first_script=req.firstScript)
     session_id = session.session_id
 
     if not fresh:
@@ -399,6 +399,9 @@ def _evil_logic(req: V1RequestBase, driver: WebDriver, method: str) -> Challenge
 
     if req.returnScreenshot:
         challenge_res.screenshot = driver.get_screenshot_as_base64()
+
+    if req.finishToBlank:
+        driver.get("about:blank")
 
     res.result = challenge_res
     return res

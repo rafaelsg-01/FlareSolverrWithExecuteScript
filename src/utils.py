@@ -125,7 +125,7 @@ def create_proxy_extension(proxy: dict) -> str:
     return proxy_extension_dir
 
 
-def get_webdriver(proxy: dict = None) -> WebDriver:
+def get_webdriver(proxy: dict = None, first_script: str = None) -> WebDriver:
     global PATCHED_DRIVER_PATH, USER_AGENT
     logging.debug('Launching web browser...')
 
@@ -217,6 +217,14 @@ def get_webdriver(proxy: dict = None) -> WebDriver:
     # options.add_argument('--disable-setuid-sandbox')
     # options.add_argument('--disable-dev-shm-usage')
     # driver = webdriver.Chrome(options=options)
+
+    if first_script is not None:
+        driver.execute_cdp_cmd(
+            "Page.addScriptToEvaluateOnNewDocument",
+            {
+                "source": first_script
+            },
+        )
 
     return driver
 
