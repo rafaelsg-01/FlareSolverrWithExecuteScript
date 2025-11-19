@@ -11,7 +11,7 @@ while true; do
     echo ""
     echo "===== MENU PROXY WEB ====="
     echo "Escolha uma opção:"
-    echo "1) Git Pull (Update Local)"
+    echo "1) Git Reset Hard (Update Local Force)"
     echo "2) Docker Build"
     echo "3) Docker Run"
     echo "4) Docker Stop"
@@ -26,7 +26,7 @@ while true; do
     read -p "Digite o número da opção: " opcao
 
     case $opcao in
-        1) bash "$SCRIPTS_DIR/docker-git-pull.sh" ;;
+        1) bash "$SCRIPTS_DIR/docker-git-reset-hard.sh" ;;
         2) bash "$SCRIPTS_DIR/docker-build.sh" ;;
         3) bash "$SCRIPTS_DIR/docker-run.sh" ;;
         4) bash "$SCRIPTS_DIR/docker-stop.sh" ;;
