@@ -13,4 +13,4 @@ docker run -d \
 
 echo "Run container."
 
-echo "Proxy Web iniciado em http://127.0.0.1:80 (acessível via Cloudflare/domínio)."
+echo "Proxy Web iniciado em http://127.0.0.1:8191 (acessível via Cloudflare/domínio)."
