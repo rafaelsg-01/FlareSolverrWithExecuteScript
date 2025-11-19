@@ -1,8 +1,8 @@
 #!/bin/bash
-cd content-proxy-web || true
+cd $HOME/content-proxy-web || true
 
-echo "Parando o container content-proxy-web-01..."
+echo "Stop container content-proxy-web-01..."
 
 docker stop content-proxy-web-01
 
-echo "Container parado."
+echo "Stop container."

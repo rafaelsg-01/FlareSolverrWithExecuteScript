@@ -1,8 +1,8 @@
 #!/bin/bash
-cd content-proxy-web || true
+cd $HOME/content-proxy-web || true
 
-echo "Atualizando o repositório com git pull..."
+echo "Git Pull (Update Local) rafaelsg-01/FlareSolverrWithExecuteScript..."
 
 git pull
 
-echo "Repositório atualizado."
+echo "Git Pull repositório local atualizado."

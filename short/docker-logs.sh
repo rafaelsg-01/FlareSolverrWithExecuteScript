@@ -1,6 +1,6 @@
 #!/bin/bash
-cd content-proxy-web || true
+cd $HOME/content-proxy-web || true
 
-echo "Log do container content-proxy-web-01:"
+echo "Logs do container content-proxy-web-01..."
 
 docker logs -f content-proxy-web-01
