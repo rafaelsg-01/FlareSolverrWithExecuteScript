@@ -11,7 +11,7 @@ fi
 
 bash ./short/docker-stop.sh
 bash ./short/docker-remove.sh
-bash ./short/docker-git-pull.sh
+bash ./short/docker-git-reset-hard.sh
 bash ./short/docker-build.sh
 bash ./short/docker-run.sh
 
