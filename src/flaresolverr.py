@@ -16,6 +16,22 @@ import utils
 env_proxy_url = os.environ.get('PROXY_URL', None)
 env_proxy_username = os.environ.get('PROXY_USERNAME', None)
 env_proxy_password = os.environ.get('PROXY_PASSWORD', None)
+env_token = os.environ.get('TOKEN_PROXY_WEB', None)
+
+
+def validate_token():
+    """
+    Validate token from query parameter
+    """
+    logging.info(os.environ.get('TOKEN_PROXY_WEB', None))
+    if env_token is None:
+        return True
+    token = request.query.get('token')
+    if token != env_token:
+        response.status = 401
+        response.content_type = 'application/json'
+        return False
+    return True
 
 
 class JSONErrorBottle(Bottle):
@@ -35,6 +51,8 @@ def index():
     """
     Show welcome message
     """
+    if not validate_token():
+        return json.dumps(dict(error='Unauthorized', status_code=401))
     res = flaresolverr_service.index_endpoint()
     return utils.object_to_dict(res)
 
@@ -45,6 +63,8 @@ def health():
     Healthcheck endpoint.
     This endpoint is special because it doesn't print traces
     """
+    if not validate_token():
+        return json.dumps(dict(error='Unauthorized', status_code=401))
     res = flaresolverr_service.health_endpoint()
     return utils.object_to_dict(res)
 
@@ -54,6 +74,8 @@ def controller_v1():
     """
     Controller v1
     """
+    if not validate_token():
+        return json.dumps(dict(error='Unauthorized', status_code=401))
     data = request.json or {}
     if (('proxy' not in data or not data.get('proxy')) and env_proxy_url is not None and (env_proxy_username is None and env_proxy_password is None)):
         logging.info('Using proxy URL ENV')
