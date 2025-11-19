@@ -7,7 +7,7 @@ docker run -d \
     --name content-proxy-web-01 \
     --network caddy-net \
     --env-file ./.env \
-    -e LOG_LEVEL=info \
+    -e LOG_LEVEL=debug \
     --restart unless-stopped \
     build-content-proxy-web
 
