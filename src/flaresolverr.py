@@ -23,7 +23,6 @@ def validate_token():
     """
     Validate token from query parameter
     """
-    logging.info(os.environ.get('TOKEN_PROXY_WEB', None))
     if env_token is None:
         return True
     token = request.query.get('token')
