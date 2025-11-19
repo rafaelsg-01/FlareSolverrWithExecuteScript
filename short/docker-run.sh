@@ -5,7 +5,7 @@ echo "Run container content-proxy-web-01..."
 
 docker run -d \
     --name content-proxy-web-01 \
-    -p 8191:8191 \
+    --network caddy-net \
     --env-file ./.env \
     -e LOG_LEVEL=info \
     --restart unless-stopped \
