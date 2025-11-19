@@ -20,6 +20,7 @@ while true; do
     echo "7) Docker Logs"
     echo "8) Docker Soft Reset"
     echo "9) Docker Hard Reset"
+    echo "10) Docker View Containers"
     echo "0) Sair"
     echo "====================="
     read -p "Digite o número da opção: " opcao
@@ -34,6 +35,7 @@ while true; do
         7) bash "$SCRIPTS_DIR/docker-logs.sh" ;;
         8) bash "$SCRIPTS_DIR/docker-soft-reset.sh" ;;
         9) bash "$SCRIPTS_DIR/docker-hard-reset.sh" ;;
+        10) bash "$SCRIPTS_DIR/docker-view-container.sh" ;;
         0) echo "Saindo..."; exit ;;
         *) echo "Opção inválida!";;
     esac
