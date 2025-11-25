@@ -47,7 +47,10 @@ class V1RequestBase(object):
     returnRawHtml: bool = None  # deprecated v2.0.0, not used
     waitInSeconds: int = None
     firstScript: str = None
-    finishToBlank: bool = None
+    maxOptimization: bool = None
+    directFetch: str = None
+    configured: bool = None
+    redirectManual: bool = None
 
     def __init__(self, _dict):
         self.__dict__.update(_dict)

@@ -23,18 +23,13 @@ def validate_token():
     """
     Validate token from query parameter
     """
-    logging.info("55555")
-    logging.info(os.environ.get('TOKEN_PROXY_WEB', None))
     if env_token is None:
-        logging.info("66666")
         return True
     token = request.query.get('token')
     if token != env_token:
-        logging.info("7777")
         response.status = 401
         response.content_type = 'application/json'
         return False
-    logging.info("88888")
     return True
 
 
@@ -52,16 +47,12 @@ app = JSONErrorBottle()
 
 @app.route('/')
 def index():
-    logging.info("1111")
     """
     Show welcome message
     """
-    logging.info("2222")
     if not validate_token():
-        logging.info("33333")
         return json.dumps(dict(error='Unauthorized', status_code=401))
     res = flaresolverr_service.index_endpoint()
-    logging.info("44444")
     return utils.object_to_dict(res)
 
 

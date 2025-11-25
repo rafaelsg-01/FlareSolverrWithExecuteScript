@@ -17,6 +17,7 @@ env_proxy_url = os.environ.get('PROXY_URL', None)
 env_proxy_username = os.environ.get('PROXY_USERNAME', None)
 env_proxy_password = os.environ.get('PROXY_PASSWORD', None)
 env_token = os.environ.get('TOKEN_PROXY_WEB', None)
+env_initial_url = os.environ.get('INITIAL_URL', None)
 
 
 def validate_token():
@@ -69,13 +70,14 @@ def health():
 
 
 @app.post('/v1')
-def controller_v1():
+def controller_v1(request_json_internal=None):
     """
     Controller v1
     """
-    if not validate_token():
-        return json.dumps(dict(error='Unauthorized', status_code=401))
-    data = request.json or {}
+    if request_json_internal is None:
+        if not validate_token():
+            return json.dumps(dict(error='Unauthorized', status_code=401))
+    data = request.json or request_json_internal or {}
     if (('proxy' not in data or not data.get('proxy')) and env_proxy_url is not None and (env_proxy_username is None and env_proxy_password is None)):
         logging.info('Using proxy URL ENV')
         data['proxy'] = {"url": env_proxy_url}
@@ -153,6 +155,68 @@ if __name__ == "__main__":
     app.install(error_plugin)
     prometheus_plugin.setup()
     app.install(prometheus_plugin.prometheus_plugin)
+
+    if env_initial_url is not None and env_initial_url != '':
+        logging.info('Creating initial session')
+        Js_firstScript = """
+            if (!location.href.includes("#_disableFirstScript")) {
+                console.log('Exec -> _enableFirstScript')
+                const limite = 1763962190000 + (2 * 60 * 1000); // timestamp + 2 minutos
+
+                // Bypass DisableDevtool
+                if (location.href.includes("#_execScript_bypassDisableDevtool")) {
+                    console.log('Exec -> _execScript_bypassDisableDevtool')
+
+                    let _documentWrite = document.write.bind(document)
+                    document.write = function (html) {
+                        html = html.replace('already running");', 'already running");return;')
+                        _documentWrite(html)
+                    }
+                }
+
+                // Set Headers Rede Canais (Cookie and Service Worker)
+                if (location.href.includes("#_execScript_setHeadersRedeCanais") && Date.now() > limite) {
+                    console.log('Exec -> _execScript_setHeadersRedeCanais')
+
+                    window._waitNewPromise = new Promise((resolve) => {
+                        const pFetch = fetch("/che")
+                            .then(() => console.log("Fetch /che completed"))
+                            .catch((e) => console.error("Fetch error: " + e))
+
+                        const pRegister = navigator.serviceWorker.register("/sw.js")
+                            .then((reg) => {
+                                console.log("Service Worker registered")
+                                return navigator.serviceWorker.ready
+                            })
+                            .then(() => console.log("Service Worker activated"))
+                            .catch((e) => console.error("Service Worker error: " + e))
+
+                        Promise.allSettled([pFetch, pRegister]).then(() => {
+                            console.log("All processes completed.")
+                            resolve(true)
+                        })
+                    })
+                }
+            }
+        """
+
+        initialSessionCreate = controller_v1(request_json_internal={
+            "cmd": "sessions.create",
+            "session": "session01",
+            "maxOptimization": True,
+            "firstScript": Js_firstScript
+        })
+        logging.info(f'Initial session created: {initialSessionCreate}')
+
+        logging.info('Creating initial request')
+        initialRequestGet = controller_v1(request_json_internal={
+            "cmd": "request.get",
+            "session": "session01",
+            "url": env_initial_url,
+            "maxTimeout": 120000,
+            "configured": True
+        })
+        logging.info(f'Initial request completed: {initialRequestGet}')
 
     # start webserver
     # default server 'wsgiref' does not support concurrent requests

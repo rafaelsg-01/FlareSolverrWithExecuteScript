@@ -14,6 +14,7 @@ class Session:
     session_id: str
     driver: WebDriver
     created_at: datetime
+    configured: bool = False
 
     def lifetime(self) -> timedelta:
         return datetime.now() - self.created_at
@@ -26,7 +27,7 @@ class SessionsStorage:
         self.sessions = {}
 
     def create(self, session_id: Optional[str] = None, proxy: Optional[dict] = None,
-               force_new: Optional[bool] = False, first_script: Optional[str] = None) -> Tuple[Session, bool]:
+               force_new: Optional[bool] = False, first_script: Optional[str] = None, max_optimization: Optional[bool] = False) -> Tuple[Session, bool]:
         """create creates new instance of WebDriver if necessary,
         assign defined (or newly generated) session_id to the instance
         and returns the session object. If a new session has been created
@@ -45,7 +46,7 @@ class SessionsStorage:
         if self.exists(session_id):
             return self.sessions[session_id], False
 
-        driver = utils.get_webdriver(proxy, first_script=first_script)
+        driver = utils.get_webdriver(proxy, first_script=first_script, max_optimization=max_optimization)
         created_at = datetime.now()
         session = Session(session_id, driver, created_at)
 

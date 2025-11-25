@@ -125,7 +125,7 @@ def create_proxy_extension(proxy: dict) -> str:
     return proxy_extension_dir
 
 
-def get_webdriver(proxy: dict = None, first_script: str = None) -> WebDriver:
+def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization: bool = False) -> WebDriver:
     global PATCHED_DRIVER_PATH, USER_AGENT
     logging.debug('Launching web browser...')
 
@@ -174,6 +174,71 @@ def get_webdriver(proxy: dict = None, first_script: str = None) -> WebDriver:
             start_xvfb_display()
     # For normal headless mode:
     # options.add_argument('--headless')
+
+    if max_optimization:
+        options.add_argument('--no-zygote')
+        options.add_argument('--enable-low-end-device-mode')
+        options.add_argument('--js-flags="--optimize_for_size"')
+        options.add_argument('--in-process-gpu')
+        options.add_argument('--memory-pressure-off')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--metrics-recording-only')
+        options.add_argument('--no-first-run')
+        options.add_argument('--no-default-browser-check')
+
+        options.add_argument('--window-size=800,600')
+        options.add_argument('--headless=new')
+
+        options.add_argument('--disable-features=TranslateUI,BackForwardCache,MediaRouter,OptimizationHints,V8IdleTasks,InterestFeedContentSuggestions')
+
+        options.add_argument('--disable-speculation-rules')
+        options.add_argument('--disable-webrtc')
+        options.add_argument('--disable-client-side-phishing-detection')
+        options.add_argument('--dns-prefetch-disable')
+
+        options.add_argument('--disable-gpu')
+        options.add_argument('--disable-software-rasterizer')
+        options.add_argument('--disable-webgl')
+        options.add_argument('--disable-webgl2')
+        options.add_argument('--disable-3d-apis')
+        options.add_argument('--disable-remote-fonts')
+        options.add_argument('--disable-audio')
+        options.add_argument('--mute-audio')
+        options.add_argument('--disable-print-preview')
+
+        options.add_argument('--disable-breakpad')
+        options.add_argument('--no-crash-upload')
+        options.add_argument('--disable-logging')
+        options.add_argument('--log-level=3')
+        options.add_argument('--silent')
+        options.add_argument('--disable-hang-monitor')
+
+        options.add_argument('--disk-cache-size=1')
+        options.add_argument('--media-cache-size=1')
+        options.add_argument('--disable-application-cache')
+        options.add_argument('--disable-cache')
+
+        options.add_argument('--disable-background-mode')
+        options.add_argument('--disable-background-timer-throttling')
+        options.add_argument('--disable-background-networking')
+        options.add_argument('--disable-renderer-backgrounding')
+        options.add_argument('--disable-default-apps')
+        options.add_argument('--disable-extensions')
+        options.add_argument('--disable-sync')
+        options.add_argument('--disable-translate')
+        options.add_argument('--disable-popup-blocking')
+        options.add_argument('--disable-notifications')
+        options.add_argument('--disable-domain-reliability')
+        options.add_argument('--disable-component-update')
+        options.add_argument('--disable-ipc-flooding-protection')
+        options.add_argument('--disable-speech-api')
+        options.add_argument('--disable-geolocation')
+        options.add_argument('--disable-permissions-api')
+        options.add_argument('--disable-presentation-api')
+
+        options.add_argument('--no-sandbox')
+        options.add_argument('--ignore-certificate-errors')
+        options.add_argument('--ignore-ssl-errors')
 
     # if we are inside the Docker container, we avoid downloading the driver
     driver_exe_path = None

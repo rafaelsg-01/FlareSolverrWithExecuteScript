@@ -144,8 +144,8 @@ def _controller_v1_handler(req: V1RequestBase) -> V1ResponseBase:
 
 def _cmd_request_get(req: V1RequestBase) -> V1ResponseBase:
     # do some validations
-    if req.url is None:
-        raise Exception("Request parameter 'url' is mandatory in 'request.get' command.")
+    """ if req.url is None:
+        raise Exception("Request parameter 'url' is mandatory in 'request.get' command.") """
     if req.postData is not None:
         raise Exception("Cannot use 'postBody' when sending a GET request.")
     if req.returnRawHtml is not None:
@@ -181,7 +181,7 @@ def _cmd_request_post(req: V1RequestBase) -> V1ResponseBase:
 def _cmd_sessions_create(req: V1RequestBase) -> V1ResponseBase:
     logging.debug("Creating new session...")
 
-    session, fresh = SESSIONS_STORAGE.create(session_id=req.session, proxy=req.proxy, first_script=req.firstScript)
+    session, fresh = SESSIONS_STORAGE.create(session_id=req.session, proxy=req.proxy, first_script=req.firstScript, max_optimization=req.maxOptimization)
     session_id = session.session_id
 
     if not fresh:
@@ -229,6 +229,15 @@ def _resolve_challenge(req: V1RequestBase, method: str) -> ChallengeResolutionT:
             session_id = req.session
             ttl = timedelta(minutes=req.session_ttl_minutes) if req.session_ttl_minutes else None
             session, fresh = SESSIONS_STORAGE.get(session_id, ttl)
+
+            if fresh:
+                raise Exception("The session doesn't exist.")
+
+            if req.configured is True:
+                session.configured = True
+
+            if not session.configured:
+                raise Exception("The session is not configured.")
 
             if fresh:
                 logging.debug(f"new session created to perform the request (session_id={session_id})")
@@ -281,19 +290,51 @@ def click_verify(driver: WebDriver):
 
     time.sleep(2)
 
+def direct_fetch(driver: WebDriver, url: str, redirect_manual: bool = False) -> str:
+    redirect_option = ", redirect: 'manual'" if redirect_manual else ""
+    result = driver.execute_script(f"""
+        return fetch('{url}', {{referrerPolicy:'no-referrer'{redirect_option}}})
+            .then(r => r.ok ? r.text() : 'ERROR THEN direct_fetch: ' + r.status)
+            .catch(e => 'ERROR CATCH direct_fetch: ' + JSON.stringify(e));
+    """)
+
+    try:
+        driver.execute_cdp_cmd("HeapProfiler.collectGarbage", {})
+    except:
+        pass
+
+    return result
 
 def _evil_logic(req: V1RequestBase, driver: WebDriver, method: str) -> ChallengeResolutionT:
     res = ChallengeResolutionT({})
     res.status = STATUS_OK
     res.message = ""
 
+    isDirectFetch = req.directFetch is not None and req.directFetch != ""
+
+    if isDirectFetch:
+        html = direct_fetch(driver, req.directFetch, req.redirectManual)
+        if not html.startswith("ERROR"):
+            challenge_res = ChallengeResolutionResultT({})
+            challenge_res.url = driver.current_url
+            challenge_res.status = 200
+
+            challenge_res.headers = {}
+            challenge_res.response = html
+            res.result = challenge_res
+
+            return res
+        else:
+            logging.info("Direct fetch error: " + html)
 
     # navigate to the page
-    logging.debug(f'Navigating to... {req.url}')
+    logging.debug(f'Navigating to... {req.url or driver.current_url or ''}')
     if method == 'POST':
         _post_request(req, driver)
     else:
-        driver.get(req.url)
+        saveCurrentUrl = driver.current_url
+        driver.get("about:blank")
+        driver.get(req.url or saveCurrentUrl or '')
 
     # set cookies if required
     if req.cookies is not None and len(req.cookies) > 0:
@@ -305,7 +346,9 @@ def _evil_logic(req: V1RequestBase, driver: WebDriver, method: str) -> Challenge
         if method == 'POST':
             _post_request(req, driver)
         else:
-            driver.get(req.url)
+            saveCurrentUrl = driver.current_url
+            driver.get("about:blank")
+            driver.get(req.url or saveCurrentUrl or '')
 
     # wait for the page
     if utils.get_config_log_html():
@@ -363,6 +406,10 @@ def _evil_logic(req: V1RequestBase, driver: WebDriver, method: str) -> Challenge
             except TimeoutException:
                 logging.debug("Timeout waiting for selector")
 
+                if attempt == 1:
+                    logging.debug("First attempt, adding a 3-second delay before clicking.")
+                    time.sleep(3)
+
                 click_verify(driver)
 
                 # update the html (cloudflare reloads the page every 5 s)
@@ -395,13 +442,16 @@ def _evil_logic(req: V1RequestBase, driver: WebDriver, method: str) -> Challenge
             logging.info("Waiting " + str(req.waitInSeconds) + " seconds before returning the response...")
             time.sleep(req.waitInSeconds)
 
-        challenge_res.response = driver.page_source
+        driver.execute_script("return window._waitNewPromise;")
+        driver.execute_script("location.reload();")
+
+        if isDirectFetch:
+            challenge_res.response = direct_fetch(driver, req.directFetch, req.redirectManual)
+        else:
+            challenge_res.response = driver.page_source
 
     if req.returnScreenshot:
         challenge_res.screenshot = driver.get_screenshot_as_base64()
-
-    if req.finishToBlank:
-        driver.get("about:blank")
 
     res.result = challenge_res
     return res
