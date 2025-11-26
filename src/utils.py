@@ -176,10 +176,10 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
     # options.add_argument('--headless')
 
     if max_optimization:
-        # options.add_argument('--no-zygote')
-        # options.add_argument('--enable-low-end-device-mode') 
-        # options.add_argument('--js-flags="--optimize_for_size"') 
-        # options.add_argument('--in-process-gpu') 
+        options.add_argument('--no-zygote')
+        options.add_argument('--enable-low-end-device-mode') 
+        options.add_argument('--js-flags="--optimize_for_size"') 
+        options.add_argument('--in-process-gpu') 
         
         options.add_argument('--memory-pressure-off') # CULPADO: Deixe o Chrome gerenciar a memória nativamente
         options.add_argument('--disable-dev-shm-usage') # Essencial para Docker não crashar
@@ -205,7 +205,7 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         # options.add_argument('--disable-3d-apis')
         # options.add_argument('--disable-remote-fonts')
         
-        # options.add_argument('--disable-audio') 
+        options.add_argument('--disable-audio') 
         options.add_argument('--mute-audio')
         options.add_argument('--disable-print-preview')
 
