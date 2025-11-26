@@ -176,36 +176,36 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
     # options.add_argument('--headless')
 
     if max_optimization:
-        # options.add_argument('--no-zygote')
-        # options.add_argument('--enable-low-end-device-mode') 
-        # options.add_argument('--js-flags="--optimize_for_size"') 
-        # options.add_argument('--in-process-gpu') 
+        options.add_argument('--no-zygote')
+        options.add_argument('--enable-low-end-device-mode') 
+        options.add_argument('--js-flags="--optimize_for_size"') 
+        options.add_argument('--in-process-gpu') 
         
-        # options.add_argument('--memory-pressure-off') # CULPADO: Deixe o Chrome gerenciar a memória nativamente
+        options.add_argument('--memory-pressure-off') # CULPADO: Deixe o Chrome gerenciar a memória nativamente
         options.add_argument('--disable-dev-shm-usage') # Essencial para Docker não crashar
-        # options.add_argument('--metrics-recording-only') # CULPADO: Pode impedir logs internos necessários
+        options.add_argument('--metrics-recording-only') # CULPADO: Pode impedir logs internos necessários
         options.add_argument('--no-first-run')
         options.add_argument('--no-default-browser-check')
 
-        # options.add_argument('--window-size=800,600') # CULPADO: Resolução 100% de bot. Mudei abaixo:
+        options.add_argument('--window-size=800,600') # CULPADO: Resolução 100% de bot. Mudei abaixo:
         options.add_argument('--window-size=1920,1080') # RECOMENDADO: Resolução padrão de usuário
         options.add_argument('--headless=new')
 
-        # options.add_argument('--disable-features=TranslateUI,BackForwardCache,MediaRouter,OptimizationHints,V8IdleTasks,InterestFeedContentSuggestions') 
+        options.add_argument('--disable-features=TranslateUI,BackForwardCache,MediaRouter,OptimizationHints,V8IdleTasks,InterestFeedContentSuggestions') 
 
-        # options.add_argument('--disable-speculation-rules') # CULPADO: Cloudflare usa isso para prever carregamento
-        # options.add_argument('--disable-webrtc') 
+        options.add_argument('--disable-speculation-rules') # CULPADO: Cloudflare usa isso para prever carregamento
+        options.add_argument('--disable-webrtc') 
         options.add_argument('--disable-client-side-phishing-detection')
-        # options.add_argument('--dns-prefetch-disable') 
+        options.add_argument('--dns-prefetch-disable') 
 
-        # options.add_argument('--disable-gpu')
-        # options.add_argument('--disable-software-rasterizer')
-        # options.add_argument('--disable-webgl')
-        # options.add_argument('--disable-webgl2')
-        # options.add_argument('--disable-3d-apis')
-        # options.add_argument('--disable-remote-fonts')
+        options.add_argument('--disable-gpu')
+        options.add_argument('--disable-software-rasterizer')
+        options.add_argument('--disable-webgl')
+        options.add_argument('--disable-webgl2')
+        options.add_argument('--disable-3d-apis')
+        options.add_argument('--disable-remote-fonts')
         
-        # options.add_argument('--disable-audio') 
+        options.add_argument('--disable-audio') 
         options.add_argument('--mute-audio')
         options.add_argument('--disable-print-preview')
 
