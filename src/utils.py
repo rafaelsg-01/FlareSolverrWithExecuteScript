@@ -198,7 +198,7 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         options.add_argument('--disable-client-side-phishing-detection')
         options.add_argument('--dns-prefetch-disable') 
 
-        # options.add_argument('--disable-gpu')
+        options.add_argument('--disable-gpu')
         options.add_argument('--disable-software-rasterizer')
         options.add_argument('--disable-webgl')
         options.add_argument('--disable-webgl2')
