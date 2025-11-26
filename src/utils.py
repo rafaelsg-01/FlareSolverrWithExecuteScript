@@ -177,24 +177,26 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
 
     if max_optimization:
         # options.add_argument('--no-zygote')
-        # options.add_argument('--enable-low-end-device-mode')
-        # options.add_argument('--js-flags="--optimize_for_size"')
-        # options.add_argument('--in-process-gpu')
-        options.add_argument('--memory-pressure-off')
-        options.add_argument('--disable-dev-shm-usage')
-        options.add_argument('--metrics-recording-only')
+        # options.add_argument('--enable-low-end-device-mode') 
+        # options.add_argument('--js-flags="--optimize_for_size"') 
+        # options.add_argument('--in-process-gpu') 
+        
+        # options.add_argument('--memory-pressure-off') # CULPADO: Deixe o Chrome gerenciar a memória nativamente
+        options.add_argument('--disable-dev-shm-usage') # Essencial para Docker não crashar
+        # options.add_argument('--metrics-recording-only') # CULPADO: Pode impedir logs internos necessários
         options.add_argument('--no-first-run')
         options.add_argument('--no-default-browser-check')
 
-        options.add_argument('--window-size=800,600')
+        # options.add_argument('--window-size=800,600') # CULPADO: Resolução 100% de bot. Mudei abaixo:
+        options.add_argument('--window-size=1920,1080') # RECOMENDADO: Resolução padrão de usuário
         options.add_argument('--headless=new')
 
-        # options.add_argument('--disable-features=TranslateUI,BackForwardCache,MediaRouter,OptimizationHints,V8IdleTasks,InterestFeedContentSuggestions') # CULPADO: Remove features que o script usa
+        # options.add_argument('--disable-features=TranslateUI,BackForwardCache,MediaRouter,OptimizationHints,V8IdleTasks,InterestFeedContentSuggestions') 
 
-        options.add_argument('--disable-speculation-rules')
-        # options.add_argument('--disable-webrtc') # CULPADO: Cloudflare verifica conectividade
+        # options.add_argument('--disable-speculation-rules') # CULPADO: Cloudflare usa isso para prever carregamento
+        # options.add_argument('--disable-webrtc') 
         options.add_argument('--disable-client-side-phishing-detection')
-        # options.add_argument('--dns-prefetch-disable') # CULPADO: Pode atrasar requisições críticas
+        # options.add_argument('--dns-prefetch-disable') 
 
         # options.add_argument('--disable-gpu')
         # options.add_argument('--disable-software-rasterizer')
@@ -203,7 +205,7 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         # options.add_argument('--disable-3d-apis')
         # options.add_argument('--disable-remote-fonts')
         
-        # options.add_argument('--disable-audio') # As vezes necessário, mas seguro comentar se der erro
+        # options.add_argument('--disable-audio') 
         options.add_argument('--mute-audio')
         options.add_argument('--disable-print-preview')
 
@@ -214,15 +216,15 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         options.add_argument('--silent')
         options.add_argument('--disable-hang-monitor')
 
-        # options.add_argument('--disk-cache-size=1') # CULPADO: O script do desafio precisa ser cacheado para rodar
+        # options.add_argument('--disk-cache-size=1') 
         # options.add_argument('--media-cache-size=1')
         # options.add_argument('--disable-application-cache')
-        # options.add_argument('--disable-cache') # CULPADO: Desativar cache mata a verificação de token
+        # options.add_argument('--disable-cache') 
 
         # options.add_argument('--disable-background-mode')
-        options.add_argument('--disable-background-timer-throttling')
-        options.add_argument('--disable-background-networking')
-        options.add_argument('--disable-renderer-backgrounding')
+        # options.add_argument('--disable-background-timer-throttling') # CULPADO CRÍTICO: Cloudflare usa timers JS. Se travar isso, o script para.
+        # options.add_argument('--disable-background-networking') # CULPADO CRÍTICO: Impede validação se a aba parecer "inativa"
+        # options.add_argument('--disable-renderer-backgrounding') # CULPADO: Mesmo do de cima
         options.add_argument('--disable-default-apps')
         options.add_argument('--disable-extensions')
         options.add_argument('--disable-sync')
@@ -231,11 +233,11 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         options.add_argument('--disable-notifications')
         options.add_argument('--disable-domain-reliability')
         options.add_argument('--disable-component-update')
-        # options.add_argument('--disable-ipc-flooding-protection') # CULPADO: Pode travar a comunicação do desafio
-        # options.add_argument('--disable-speech-api') # CULPADO: API verificada pelo Cloudflare (Fingerprinting)
-        # options.add_argument('--disable-geolocation') # CULPADO: API verificada pelo Cloudflare
-        # options.add_argument('--disable-permissions-api') # CULPADO CRÍTICO: Se remover isso, o script trava por erro de JS
-        # options.add_argument('--disable-presentation-api') # CULPADO: API verificada
+        # options.add_argument('--disable-ipc-flooding-protection') 
+        # options.add_argument('--disable-speech-api') 
+        # options.add_argument('--disable-geolocation') 
+        # options.add_argument('--disable-permissions-api') 
+        # options.add_argument('--disable-presentation-api') 
 
         options.add_argument('--no-sandbox')
         options.add_argument('--ignore-certificate-errors')
