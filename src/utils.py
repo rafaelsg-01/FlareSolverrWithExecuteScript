@@ -227,7 +227,7 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         options.add_argument('--disable-renderer-backgrounding') # CULPADO: Mesmo do de cima
         # options.add_argument('--disable-default-apps')
         # options.add_argument('--disable-extensions')
-        options.add_argument('--disable-sync')
+        # options.add_argument('--disable-sync')
         # options.add_argument('--disable-translate')
         # options.add_argument('--disable-popup-blocking')
         # options.add_argument('--disable-notifications')
