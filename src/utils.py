@@ -202,8 +202,8 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         # options.add_argument('--disable-software-rasterizer')
         # options.add_argument('--disable-webgl')
         # options.add_argument('--disable-webgl2')
-        # options.add_argument('--disable-3d-apis')
-        # options.add_argument('--disable-remote-fonts')
+        options.add_argument('--disable-3d-apis')
+        options.add_argument('--disable-remote-fonts')
         
         options.add_argument('--disable-audio') 
         options.add_argument('--mute-audio')
