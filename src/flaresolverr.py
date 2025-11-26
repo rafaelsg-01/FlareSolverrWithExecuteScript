@@ -203,7 +203,7 @@ if __name__ == "__main__":
         initialSessionCreate = controller_v1(request_json_internal={
             "cmd": "sessions.create",
             "session": "session01",
-            #"maxOptimization": True,
+            "maxOptimization": True,
             "firstScript": Js_firstScript
         })
         logging.info(f'Initial session created: {initialSessionCreate}')
