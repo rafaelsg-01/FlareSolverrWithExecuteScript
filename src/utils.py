@@ -225,14 +225,14 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         options.add_argument('--disable-background-timer-throttling') # CULPADO CRÍTICO: Cloudflare usa timers JS. Se travar isso, o script para.
         options.add_argument('--disable-background-networking') # CULPADO CRÍTICO: Impede validação se a aba parecer "inativa"
         options.add_argument('--disable-renderer-backgrounding') # CULPADO: Mesmo do de cima
-        options.add_argument('--disable-default-apps')
-        options.add_argument('--disable-extensions')
-        options.add_argument('--disable-sync')
-        options.add_argument('--disable-translate')
-        options.add_argument('--disable-popup-blocking')
-        options.add_argument('--disable-notifications')
-        options.add_argument('--disable-domain-reliability')
-        options.add_argument('--disable-component-update')
+        # options.add_argument('--disable-default-apps')
+        # options.add_argument('--disable-extensions')
+        # options.add_argument('--disable-sync')
+        # options.add_argument('--disable-translate')
+        # options.add_argument('--disable-popup-blocking')
+        # options.add_argument('--disable-notifications')
+        # options.add_argument('--disable-domain-reliability')
+        # options.add_argument('--disable-component-update')
         options.add_argument('--disable-ipc-flooding-protection') 
         options.add_argument('--disable-speech-api') 
         options.add_argument('--disable-geolocation') 
