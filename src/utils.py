@@ -216,15 +216,15 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         options.add_argument('--silent')
         options.add_argument('--disable-hang-monitor')
 
-        # options.add_argument('--disk-cache-size=1') 
-        # options.add_argument('--media-cache-size=1')
-        # options.add_argument('--disable-application-cache')
-        # options.add_argument('--disable-cache') 
+        options.add_argument('--disk-cache-size=1') 
+        options.add_argument('--media-cache-size=1')
+        options.add_argument('--disable-application-cache')
+        options.add_argument('--disable-cache') 
 
-        # options.add_argument('--disable-background-mode')
-        # options.add_argument('--disable-background-timer-throttling') # CULPADO CRÍTICO: Cloudflare usa timers JS. Se travar isso, o script para.
-        # options.add_argument('--disable-background-networking') # CULPADO CRÍTICO: Impede validação se a aba parecer "inativa"
-        # options.add_argument('--disable-renderer-backgrounding') # CULPADO: Mesmo do de cima
+        options.add_argument('--disable-background-mode')
+        options.add_argument('--disable-background-timer-throttling') CULPADO CRÍTICO: Cloudflare usa timers JS. Se travar isso, o script para.
+        options.add_argument('--disable-background-networking') # CULPADO CRÍTICO: Impede validação se a aba parecer "inativa"
+        options.add_argument('--disable-renderer-backgrounding') # CULPADO: Mesmo do de cima
         # options.add_argument('--disable-default-apps')
         # options.add_argument('--disable-extensions')
         # options.add_argument('--disable-sync')
@@ -233,11 +233,11 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         # options.add_argument('--disable-notifications')
         # options.add_argument('--disable-domain-reliability')
         # options.add_argument('--disable-component-update')
-        # options.add_argument('--disable-ipc-flooding-protection') 
-        # options.add_argument('--disable-speech-api') 
-        # options.add_argument('--disable-geolocation') 
-        # options.add_argument('--disable-permissions-api') 
-        # options.add_argument('--disable-presentation-api') 
+        options.add_argument('--disable-ipc-flooding-protection') 
+        options.add_argument('--disable-speech-api') 
+        options.add_argument('--disable-geolocation') 
+        options.add_argument('--disable-permissions-api') 
+        options.add_argument('--disable-presentation-api') 
 
         options.add_argument('--no-sandbox')
         options.add_argument('--ignore-certificate-errors')
