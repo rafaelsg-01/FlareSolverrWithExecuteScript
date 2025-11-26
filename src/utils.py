@@ -176,7 +176,7 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
     # options.add_argument('--headless')
 
     if max_optimization:
-        options.add_argument('--no-zygote')
+        # options.add_argument('--no-zygote')
         options.add_argument('--enable-low-end-device-mode')
         options.add_argument('--js-flags="--optimize_for_size"')
         options.add_argument('--in-process-gpu')
@@ -196,12 +196,12 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         options.add_argument('--disable-client-side-phishing-detection')
         options.add_argument('--dns-prefetch-disable')
 
-        options.add_argument('--disable-gpu')
-        options.add_argument('--disable-software-rasterizer')
-        options.add_argument('--disable-webgl')
-        options.add_argument('--disable-webgl2')
-        options.add_argument('--disable-3d-apis')
-        options.add_argument('--disable-remote-fonts')
+        # options.add_argument('--disable-gpu')
+        # options.add_argument('--disable-software-rasterizer')
+        # options.add_argument('--disable-webgl')
+        # options.add_argument('--disable-webgl2')
+        # options.add_argument('--disable-3d-apis')
+        # options.add_argument('--disable-remote-fonts')
         options.add_argument('--disable-audio')
         options.add_argument('--mute-audio')
         options.add_argument('--disable-print-preview')
