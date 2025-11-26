@@ -8,7 +8,7 @@ docker run -d \
     --network caddy-net \
     --env-file ./.env \
     -e LOG_LEVEL=info \
-    --memory="100m" \
+    --memory="200m" \
     --memory-swap="900m" \
     --restart unless-stopped \
     build-content-proxy-web
