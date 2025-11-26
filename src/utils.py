@@ -177,19 +177,20 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
 
     if max_optimization:
         # options.add_argument('--no-zygote')
-        options.add_argument('--enable-low-end-device-mode')
-        options.add_argument('--js-flags="--optimize_for_size"')
-        options.add_argument('--in-process-gpu')
+        # options.add_argument('--enable-low-end-device-mode') # CULPADO: Faz o Chrome agir lento demais pro script
+        # options.add_argument('--js-flags="--optimize_for_size"') # CULPADO: Quebra scripts complexos do Cloudflare
+        # options.add_argument('--in-process-gpu') # CULPADO: Instável no Docker Linux
         options.add_argument('--memory-pressure-off')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--metrics-recording-only')
         options.add_argument('--no-first-run')
         options.add_argument('--no-default-browser-check')
 
-        options.add_argument('--window-size=800,600')
+        # options.add_argument('--window-size=800,600') # CULPADO: Resolução de bot. Se puder, use 1920,1080
+        options.add_argument('--window-size=800,600') # RECOMENDADO: Substituí por esta
         options.add_argument('--headless=new')
 
-        options.add_argument('--disable-features=TranslateUI,BackForwardCache,MediaRouter,OptimizationHints,V8IdleTasks,InterestFeedContentSuggestions')
+        # options.add_argument('--disable-features=TranslateUI,BackForwardCache,MediaRouter,OptimizationHints,V8IdleTasks,InterestFeedContentSuggestions') # CULPADO: Remove features que o script pode checar
 
         options.add_argument('--disable-speculation-rules')
         options.add_argument('--disable-webrtc')
@@ -218,7 +219,7 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         options.add_argument('--disable-application-cache')
         options.add_argument('--disable-cache')
 
-        options.add_argument('--disable-background-mode')
+        # options.add_argument('--disable-background-mode') # CULPADO: Às vezes pausa o script se a aba não estiver "focada"
         options.add_argument('--disable-background-timer-throttling')
         options.add_argument('--disable-background-networking')
         options.add_argument('--disable-renderer-backgrounding')
