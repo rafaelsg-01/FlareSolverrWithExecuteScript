@@ -223,43 +223,89 @@ def _cmd_sessions_destroy(req: V1RequestBase) -> V1ResponseBase:
 
 def _resolve_challenge(req: V1RequestBase, method: str) -> ChallengeResolutionT:
     timeout = int(req.maxTimeout) / 1000
-    driver = None
-    try:
-        if req.session:
-            session_id = req.session
-            ttl = timedelta(minutes=req.session_ttl_minutes) if req.session_ttl_minutes else None
-            session, fresh = SESSIONS_STORAGE.get(session_id, ttl)
+    max_retries = 3 # Tenta 3 vezes
 
-            if fresh:
-                raise Exception("The session doesn't exist.")
+    for attempt in range(max_retries):
+        driver = None
+        try:
+            if req.session:
+                session_id = req.session
+                ttl = timedelta(minutes=req.session_ttl_minutes) if req.session_ttl_minutes else None
+                session, fresh = SESSIONS_STORAGE.get(session_id, ttl)
 
-            if req.configured is True:
-                session.configured = True
+                if fresh:
+                    raise Exception("The session doesn't exist.")
 
-            if not session.configured:
-                raise Exception("The session is not configured.")
+                if req.configured is True:
+                    session.configured = True
 
-            if fresh:
-                logging.debug(f"new session created to perform the request (session_id={session_id})")
+                if not session.configured:
+                    raise Exception("The session is not configured.")
+
+                if fresh:
+                    logging.debug(f"new session created to perform the request (session_id={session_id})")
+                else:
+                    logging.debug(f"existing session is used to perform the request (session_id={session_id}, "
+                                  f"lifetime={str(session.lifetime())}, ttl={str(ttl)})")
+
+                driver = session.driver
             else:
-                logging.debug(f"existing session is used to perform the request (session_id={session_id}, "
-                              f"lifetime={str(session.lifetime())}, ttl={str(ttl)})")
+                driver = utils.get_webdriver(req.proxy)
+                logging.debug('New instance of webdriver has been created to perform the request')
 
-            driver = session.driver
-        else:
-            driver = utils.get_webdriver(req.proxy)
-            logging.debug('New instance of webdriver has been created to perform the request')
-        return func_timeout(timeout, _evil_logic, (req, driver, method))
-    except FunctionTimedOut:
-        raise Exception(f'Error solving the challenge. Timeout after {timeout} seconds.')
-    except Exception as e:
-        raise Exception('Error solving the challenge. ' + str(e).replace('\n', '\\n'))
-    finally:
-        if not req.session and driver is not None:
-            if utils.PLATFORM_VERSION == "nt":
-                driver.close()
-            driver.quit()
-            logging.debug('A used instance of webdriver has been destroyed')
+            return func_timeout(timeout, _evil_logic, (req, driver, method))
+
+        except (FunctionTimedOut, Exception) as e:
+            error_msg = f'Error solving the challenge. Timeout after {timeout} seconds.' if isinstance(e, FunctionTimedOut) else 'Error solving the challenge. ' + str(e).replace('\n', '\\n')
+            
+            logging.error(f"Attempt {attempt + 1}/{max_retries} failed: {error_msg}")
+
+            if attempt == max_retries - 1:
+                raise Exception(error_msg)
+
+            try:
+                import flaresolverr
+                import js_first_script
+                import os
+
+                env_initial_url = os.environ.get('INITIAL_URL', None)
+
+                if env_initial_url is not None and env_initial_url != '':
+                    logging.info('Creating initial session (Recovery Mode)')
+                    Js_firstScript = js_first_script.Js_firstScriptImport
+
+                    initialSessionCreate = flaresolverr.controller_v1(request_json_internal={
+                        "cmd": "sessions.destroy",
+                        "session": "session01"
+                    })
+                    logging.info(f'Initial session destroyed: {initialSessionCreate}')
+
+                    initialSessionCreate = flaresolverr.controller_v1(request_json_internal={
+                        "cmd": "sessions.create",
+                        "session": "session01",
+                        "maxOptimization": True,
+                        "firstScript": Js_firstScript
+                    })
+                    logging.info(f'Initial session created: {initialSessionCreate}')
+
+                    logging.info('Creating initial request')
+                    initialRequestGet = flaresolverr.controller_v1(request_json_internal={
+                        "cmd": "request.get",
+                        "session": "session01",
+                        "url": env_initial_url,
+                        "maxTimeout": 120000,
+                        "configured": True
+                    })
+                    logging.info(f'Initial request completed: {initialRequestGet}')
+            except Exception as recovery_e:
+                logging.error(f"Erro ao tentar recriar a sessão de recuperação: {recovery_e}")
+
+        finally:
+            if not req.session and driver is not None:
+                if utils.PLATFORM_VERSION == "nt":
+                    driver.close()
+                driver.quit()
+                logging.debug('A used instance of webdriver has been destroyed')
 
 
 def click_verify(driver: WebDriver):
