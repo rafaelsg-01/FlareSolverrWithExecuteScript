@@ -5,6 +5,7 @@ import time
 from datetime import timedelta
 from html import escape
 from urllib.parse import unquote, quote
+import os
 
 from func_timeout import FunctionTimedOut, func_timeout
 from selenium.common import TimeoutException
