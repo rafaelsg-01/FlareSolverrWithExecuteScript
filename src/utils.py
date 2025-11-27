@@ -136,13 +136,13 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
     options.add_argument('--disable-search-engine-choice-screen')
     # todo: this param shows a warning in chrome head-full
     options.add_argument('--disable-setuid-sandbox')
-    # options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-dev-shm-usage')
     # this option removes the zygote sandbox (it seems that the resolution is a bit faster)
-    # options.add_argument('--no-zygote')
+    options.add_argument('--no-zygote')
     # attempt to fix Docker ARM32 build
-    """ IS_ARMARCH = platform.machine().startswith(('arm', 'aarch'))
+    IS_ARMARCH = platform.machine().startswith(('arm', 'aarch'))
     if IS_ARMARCH:
-        options.add_argument('--disable-gpu-sandbox') """
+        options.add_argument('--disable-gpu-sandbox')
     options.add_argument('--ignore-certificate-errors')
     options.add_argument('--ignore-ssl-errors')
 
@@ -183,8 +183,7 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         options.add_argument('--js-flags="--max-old-space-size=2048"')
         
         options.add_argument('--memory-pressure-off') # CULPADO: Deixe o Chrome gerenciar a memória nativamente
-        # options.add_argument('--disable-dev-shm-usage') # Essencial para Docker não crashar
-        options.add_argument('--shm-size=2g')
+        options.add_argument('--disable-dev-shm-usage') # Essencial para Docker não crashar
         options.add_argument('--metrics-recording-only') # CULPADO: Pode impedir logs internos necessários
         options.add_argument('--no-first-run')
         options.add_argument('--no-default-browser-check')
@@ -237,7 +236,7 @@ def get_webdriver(proxy: dict = None, first_script: str = None, max_optimization
         # options.add_argument('--disable-domain-reliability')
         # options.add_argument('--disable-component-update')
 
-        # options.add_argument('--disable-ipc-flooding-protection') 
+        options.add_argument('--disable-ipc-flooding-protection') 
         options.add_argument('--disable-speech-api') 
         options.add_argument('--disable-geolocation') 
         options.add_argument('--disable-permissions-api') 
