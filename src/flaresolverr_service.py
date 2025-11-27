@@ -265,6 +265,11 @@ def _resolve_challenge(req: V1RequestBase, method: str) -> ChallengeResolutionT:
             return func_timeout(timeout, _evil_logic, (req, driver, method))
 
         except (FunctionTimedOut, Exception) as e:
+            raw_error = str(e)
+
+            if "The session doesn't exist." in raw_error or "The session is not configured." in raw_error:
+                raise Exception(raw_error)
+
             error_msg = f'Error solving the challenge. Timeout after {timeout} seconds.' if isinstance(e, FunctionTimedOut) else 'Error solving the challenge. ' + str(e).replace('\n', '\\n')
 
             if is_recovery:
