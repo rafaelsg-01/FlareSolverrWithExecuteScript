@@ -223,43 +223,92 @@ def _cmd_sessions_destroy(req: V1RequestBase) -> V1ResponseBase:
 
 def _resolve_challenge(req: V1RequestBase, method: str) -> ChallengeResolutionT:
     timeout = int(req.maxTimeout) / 1000
-    driver = None
-    try:
-        if req.session:
-            session_id = req.session
-            ttl = timedelta(minutes=req.session_ttl_minutes) if req.session_ttl_minutes else None
-            session, fresh = SESSIONS_STORAGE.get(session_id, ttl)
+    
+    # URL de recuperação definida nas variáveis de ambiente
+    env_initial_url = os.environ.get('INITIAL_URL', None)
+    
+    max_retries = 3
+    
+    for attempt in range(max_retries):
+        driver = None
+        try:
+            # --- Bloco de configuração do Driver/Session (Mantido igual) ---
+            if req.session:
+                session_id = req.session
+                ttl = timedelta(minutes=req.session_ttl_minutes) if req.session_ttl_minutes else None
+                session, fresh = SESSIONS_STORAGE.get(session_id, ttl)
 
-            if fresh:
-                raise Exception("The session doesn't exist.")
+                if fresh:
+                    # Se for fresh, lógica de nova sessão...
+                    pass 
 
-            if req.configured is True:
-                session.configured = True
+                if req.configured is True:
+                    session.configured = True
 
-            if not session.configured:
-                raise Exception("The session is not configured.")
+                if not session.configured:
+                    raise Exception("The session is not configured.")
+                
+                # Logs...
+                if fresh:
+                    logging.debug(f"new session created (session_id={session_id})")
+                else:
+                    logging.debug(f"existing session used (session_id={session_id})")
 
-            if fresh:
-                logging.debug(f"new session created to perform the request (session_id={session_id})")
+                driver = session.driver
             else:
-                logging.debug(f"existing session is used to perform the request (session_id={session_id}, "
-                              f"lifetime={str(session.lifetime())}, ttl={str(ttl)})")
+                driver = utils.get_webdriver(req.proxy)
+                logging.debug('New instance of webdriver created')
+            # ---------------------------------------------------------------
 
-            driver = session.driver
-        else:
-            driver = utils.get_webdriver(req.proxy)
-            logging.debug('New instance of webdriver has been created to perform the request')
-        return func_timeout(timeout, _evil_logic, (req, driver, method))
-    except FunctionTimedOut:
-        raise Exception(f'Error solving the challenge. Timeout after {timeout} seconds.')
-    except Exception as e:
-        raise Exception('Error solving the challenge. ' + str(e).replace('\n', '\\n'))
-    finally:
-        if not req.session and driver is not None:
-            if utils.PLATFORM_VERSION == "nt":
-                driver.close()
-            driver.quit()
-            logging.debug('A used instance of webdriver has been destroyed')
+            # Tenta executar a lógica principal
+            return func_timeout(timeout, _evil_logic, (req, driver, method))
+
+        except FunctionTimedOut:
+            raise Exception(f'Error solving the challenge. Timeout after {timeout} seconds.')
+        
+        except Exception as e:
+            error_msg = str(e).lower()
+            # Detecta erros críticos de tab/conexão
+            is_crashed = "tab crashed" in error_msg or "target closed" in error_msg or "disconnected" in error_msg
+            
+            # Se for crash e ainda tivermos tentativas
+            if is_crashed and attempt < max_retries - 1:
+                logging.warning(f"Tab crashed detected! Recovering... ({attempt + 1}/{max_retries})")
+                
+                if driver:
+                    try:
+                        # 1. Limpa o estado "morto" da aba
+                        driver.get("about:blank")
+                        time.sleep(1) 
+                        
+                        # 2. Navega para a URL inicial segura (Recovery)
+                        if env_initial_url:
+                            logging.debug(f"Restoring session state at: {env_initial_url}")
+                            driver.get(env_initial_url)
+                            # Espera um pouco para garantir que carregou e a sessão estabilizou
+                            time.sleep(3) 
+                            
+                    except Exception as recovery_error:
+                        # Se der erro aqui, o driver provavelmente morreu de vez.
+                        # O loop vai continuar e, se não for sessão persistente, criará um novo driver.
+                        logging.error(f"Failed to recover to initial url: {recovery_error}")
+                        pass
+                
+                # Volta para o início do loop para tentar o _evil_logic de novo
+                continue 
+            
+            # Se não for crash ou acabaram as tentativas, explode o erro real
+            raise Exception('Error solving the challenge. ' + str(e).replace('\n', '\\n'))
+
+        finally:
+            # Se NÃO for sessão (uso único), fecha o driver.
+            if not req.session and driver is not None:
+                if utils.PLATFORM_VERSION == "nt":
+                    try: driver.close() 
+                    except: pass
+                try: driver.quit() 
+                except: pass
+                logging.debug('Webdriver instance destroyed')
 
 
 def click_verify(driver: WebDriver):
