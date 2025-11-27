@@ -8,8 +8,10 @@ docker run -d \
     --network caddy-net \
     --env-file ./.env \
     -e LOG_LEVEL=info \
-    --memory="500m" \
+    --memory="800m" \
+    --memory-reservation="500m" \
     --memory-swap="4500m" \
+    --memory-swappiness=80 \
     --shm-size="2g" \
     --oom-kill-disable=false \
     --restart=always \
