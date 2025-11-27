@@ -78,7 +78,7 @@ def controller_v1(request_json_internal=None):
     if request_json_internal is None:
         if not validate_token():
             return json.dumps(dict(error='Unauthorized', status_code=401))
-    data = request.json or request_json_internal or {}
+    data = request_json_internal or request.json or {}
     if (('proxy' not in data or not data.get('proxy')) and env_proxy_url is not None and (env_proxy_username is None and env_proxy_password is None)):
         logging.info('Using proxy URL ENV')
         data['proxy'] = {"url": env_proxy_url}
