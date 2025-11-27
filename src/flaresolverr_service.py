@@ -220,10 +220,19 @@ def _cmd_sessions_destroy(req: V1RequestBase) -> V1ResponseBase:
         "message": "The session has been removed."
     })
 
+"""
+import flaresolverr
+import js_first_script
+import os
+
+env_initial_url = os.environ.get('INITIAL_URL', None)
+"""
 
 def _resolve_challenge(req: V1RequestBase, method: str) -> ChallengeResolutionT:
     timeout = int(req.maxTimeout) / 1000
-    max_retries = 3 # Tenta 3 vezes
+
+    is_recovery = getattr(req, 'is_recovery_attempt', False)
+    max_retries = 1 if is_recovery else 3 
 
     for attempt in range(max_retries):
         driver = None
@@ -252,12 +261,15 @@ def _resolve_challenge(req: V1RequestBase, method: str) -> ChallengeResolutionT:
             else:
                 driver = utils.get_webdriver(req.proxy)
                 logging.debug('New instance of webdriver has been created to perform the request')
-
+            
             return func_timeout(timeout, _evil_logic, (req, driver, method))
 
         except (FunctionTimedOut, Exception) as e:
             error_msg = f'Error solving the challenge. Timeout after {timeout} seconds.' if isinstance(e, FunctionTimedOut) else 'Error solving the challenge. ' + str(e).replace('\n', '\\n')
-            
+
+            if is_recovery:
+                raise Exception(error_msg)
+
             logging.error(f"Attempt {attempt + 1}/{max_retries} failed: {error_msg}")
 
             if attempt == max_retries - 1:
@@ -289,16 +301,19 @@ def _resolve_challenge(req: V1RequestBase, method: str) -> ChallengeResolutionT:
                     logging.info(f'Initial session created: {initialSessionCreate}')
 
                     logging.info('Creating initial request')
+                    # AQUI ESTÁ A MUDANÇA: Adicionamos "is_recovery_attempt": True
+                    # Isso impede que essa requisição gere um novo ciclo de recuperação se falhar
                     initialRequestGet = flaresolverr.controller_v1(request_json_internal={
                         "cmd": "request.get",
                         "session": "session01",
                         "url": env_initial_url,
                         "maxTimeout": 120000,
-                        "configured": True
+                        "configured": True,
+                        "is_recovery_attempt": True 
                     })
                     logging.info(f'Initial request completed: {initialRequestGet}')
             except Exception as recovery_e:
-                logging.error(f"Erro ao tentar recriar a sessão de recuperação: {recovery_e}")
+                logging.error(f"Recovery failed inside retry logic (ignoring to try next loop): {recovery_e}")
 
         finally:
             if not req.session and driver is not None:
