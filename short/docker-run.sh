@@ -10,6 +10,7 @@ docker run -d \
     -e LOG_LEVEL=info \
     --memory="500m" \
     --memory-swap="4500m" \
+    --shm-size="2g" \
     --oom-kill-disable=false \
     --restart=always \
     build-content-proxy-web
