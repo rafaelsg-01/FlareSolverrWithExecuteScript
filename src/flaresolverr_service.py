@@ -356,13 +356,26 @@ def click_verify(driver: WebDriver):
 
     time.sleep(2)
 
-def direct_fetch(driver: WebDriver, url: str, redirect_manual: bool = False) -> str:
+def direct_fetch(driver: WebDriver, url: str, redirect_manual: bool = False, body: str = None) -> str:
     redirect_option = ", redirect: 'manual'" if redirect_manual else ""
-    result = driver.execute_script(f"""
-        return fetch('{url}', {{referrerPolicy:'no-referrer'{redirect_option}}})
+
+    if body:
+        result = driver.execute_script(f"""
+            return fetch('{url}', {{
+                referrerPolicy: 'no-referrer'{redirect_option},
+                method: 'POST',
+                body: arguments[0],
+                headers: {{'Content-Type': 'application/json'}}
+            }})
             .then(r => r.ok ? r.text() : 'ERROR THEN direct_fetch: ' + r.status)
             .catch(e => 'ERROR CATCH direct_fetch: ' + JSON.stringify(e));
-    """)
+        """, body)
+    else:
+        result = driver.execute_script(f"""
+            return fetch('{url}', {{referrerPolicy:'no-referrer'{redirect_option}}})
+                .then(r => r.ok ? r.text() : 'ERROR THEN direct_fetch: ' + r.status)
+                .catch(e => 'ERROR CATCH direct_fetch: ' + JSON.stringify(e));
+        """)
 
     try:
         driver.execute_cdp_cmd("HeapProfiler.collectGarbage", {})
@@ -379,7 +392,7 @@ def _evil_logic(req: V1RequestBase, driver: WebDriver, method: str) -> Challenge
     isDirectFetch = req.directFetch is not None and req.directFetch != ""
 
     if isDirectFetch:
-        html = direct_fetch(driver, req.directFetch, req.redirectManual)
+        html = direct_fetch(driver, req.directFetch, req.redirectManual, body=req.directBody)
         if not html.startswith("ERROR"):
             challenge_res = ChallengeResolutionResultT({})
             challenge_res.url = driver.current_url
@@ -512,7 +525,7 @@ def _evil_logic(req: V1RequestBase, driver: WebDriver, method: str) -> Challenge
         driver.execute_script("location.reload();")
 
         if isDirectFetch:
-            challenge_res.response = direct_fetch(driver, req.directFetch, req.redirectManual)
+            challenge_res.response = direct_fetch(driver, req.directFetch, req.redirectManual, body=req.directBody)
         else:
             challenge_res.response = driver.page_source
 

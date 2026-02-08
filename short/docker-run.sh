@@ -14,7 +14,6 @@ docker run -d \
     --memory-swappiness=100 \
     --shm-size="128m" \
     --oom-kill-disable=false \
-    --restart=always \
     build-content-proxy-web
 
 echo "Run container."
