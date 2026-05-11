@@ -174,7 +174,7 @@ if __name__ == "__main__":
             "cmd": "request.get",
             "session": "session01",
             "url": env_initial_url,
-            "maxTimeout": 120000,
+            "maxTimeout": 240000,
             "configured": True
         })
         logging.info(f'Initial request completed: {initialRequestGet}')
