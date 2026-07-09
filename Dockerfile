@@ -57,6 +57,8 @@ RUN mkdir -p "/app/.config/chromium/Crash Reports/pending"
 
 COPY src .
 COPY package.json ../
+# script de diagnostico (introspeccao do desafio Cloudflare) - roda com: docker exec ... python /app/diagnose-cf.py
+COPY diagnose-cf.py .
 
 EXPOSE 8191
 EXPOSE 8192
