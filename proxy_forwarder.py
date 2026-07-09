@@ -30,6 +30,14 @@ UP_PORT = int(os.environ.get("UPSTREAM_PORT", "0") or "0")
 UP_USER = os.environ.get("UPSTREAM_USER", "")
 UP_PASS = os.environ.get("UPSTREAM_PASS", "")
 
+# Allowlist: SO estes hosts passam pelo proxy pago (economiza banda).
+# Substrings separadas por virgula. O resto e BLOQUEADO (nao gasta proxy).
+ALLOW_HOSTS = [
+    s.strip().lower()
+    for s in os.environ.get("ALLOW_HOSTS", "redecanais,cloudflare").split(",")
+    if s.strip()
+]
+
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s [forwarder] %(message)s",
     level=os.environ.get("FORWARD_LOG_LEVEL", "INFO").upper(),
@@ -39,6 +47,23 @@ logging.basicConfig(
 log = logging.getLogger("forwarder")
 
 AUTH_HEADER = "Basic " + base64.b64encode(f"{UP_USER}:{UP_PASS}".encode()).decode()
+
+
+def _target_host(method, target):
+    """Extrai so o host do alvo (CONNECT host:port  ou  http://host:port/path)."""
+    if method == "CONNECT":
+        h = target.rsplit(":", 1)[0]
+    else:
+        h = target.split("://", 1)[-1].split("/", 1)[0]
+        if ":" in h:
+            h = h.rsplit(":", 1)[0]
+    return h.strip("[]").lower()
+
+
+def _is_allowed(host):
+    if not ALLOW_HOSTS:
+        return True
+    return any(a in host for a in ALLOW_HOSTS)
 
 
 async def _pipe(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
@@ -80,6 +105,16 @@ async def handle_client(cr: asyncio.StreamReader, cw: asyncio.StreamWriter):
             return
         method = parts[0].decode("latin1").upper()
         target = parts[1].decode("latin1")
+
+        # allowlist: bloqueia tudo que nao for redecanais/cloudflare (economiza proxy)
+        host = _target_host(method, target)
+        if not _is_allowed(host):
+            log.info(f"BLOQUEADO (nao gasta proxy): {host}")
+            cw.write(b"HTTP/1.1 403 Forbidden\r\n\r\n")
+            await cw.drain()
+            cw.close()
+            return
+        log.debug(f"permitido -> proxy: {host}")
 
         # abre conexao com o upstream
         try:
