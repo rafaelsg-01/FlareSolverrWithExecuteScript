@@ -312,7 +312,7 @@ def _resolve_challenge(req: V1RequestBase, method: str) -> ChallengeResolutionT:
                         "cmd": "request.get",
                         "session": "session01",
                         "url": env_initial_url,
-                        "maxTimeout": 120000,
+                        "maxTimeout": 240000,
                         "configured": True,
                         "is_recovery_attempt": True 
                     })
