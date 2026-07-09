@@ -8,6 +8,7 @@ docker run -d \
     --network caddy-net \
     --env-file ./.env \
     -e LOG_LEVEL=debug \
+    -e LOG_HTML=true \
     --memory="500m" \
     --memory-swap="4500m" \
     --memory-reservation="250m" \
