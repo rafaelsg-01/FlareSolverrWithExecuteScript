@@ -2,6 +2,10 @@
 .vscode/
 .idea/
 
+# Saidas de diagnostico (screenshots/logs) - nao commitar
+cf-diag/
+cf-diag-*/
+
 # Vagrant
 .vagrant/
 
