@@ -31,6 +31,12 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 URL = os.environ.get("URL", "https://redecanais.uk/templates/echo/css/custom.css#_execScript_setHeadersRedeCanais")
 MAXOPT = os.environ.get("MAXOPT", "false").lower() == "true"
+# injeta o firstScript (fetch /che + service worker) igual o app -> seta RCSESS/RCIP
+USE_FIRSTSCRIPT = os.environ.get("FIRSTSCRIPT", "true").lower() == "true"
+# proxy (mesmas envs do app): PROXY_URL http://host:porta + PROXY_USERNAME + PROXY_PASSWORD
+PROXY_URL = os.environ.get("PROXY_URL") or None
+PROXY_USERNAME = os.environ.get("PROXY_USERNAME") or None
+PROXY_PASSWORD = os.environ.get("PROXY_PASSWORD") or None
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cf-diag")
 os.makedirs(OUT, exist_ok=True)
@@ -157,10 +163,34 @@ def inspect_iframes(driver):
 
 def main():
     log(f"URL={URL}")
-    log(f"HEADLESS={os.environ.get('HEADLESS','true')}  MAXOPT={MAXOPT}")
+    log(f"HEADLESS={os.environ.get('HEADLESS','true')}  MAXOPT={MAXOPT}  FIRSTSCRIPT={USE_FIRSTSCRIPT}")
     utils.get_current_platform()
-    driver = utils.get_webdriver(max_optimization=MAXOPT)
+    first_script = None
+    if USE_FIRSTSCRIPT:
+        import js_first_script
+        first_script = js_first_script.Js_firstScriptImport
+        log("firstScript INJETADO (igual o app: fetch /che + service worker)")
+
+    proxy = None
+    if PROXY_URL:
+        proxy = {"url": PROXY_URL}
+        if PROXY_USERNAME or PROXY_PASSWORD:
+            proxy["username"] = PROXY_USERNAME
+            proxy["password"] = PROXY_PASSWORD
+        log(f"PROXY ATIVO: {PROXY_URL}  user={PROXY_USERNAME}")
+
+    driver = utils.get_webdriver(proxy=proxy, first_script=first_script, max_optimization=MAXOPT)
     try:
+        # confere o IP de saida (prova que o proxy esta ativo e de qual pais)
+        if proxy:
+            try:
+                driver.get("https://api.ipify.org?format=json")
+                time.sleep(1)
+                ip_txt = driver.find_element(By.TAG_NAME, "body").text
+                log(f"IP DE SAIDA (via proxy): {ip_txt}")
+            except Exception as e:
+                log(f"nao consegui checar IP de saida: {e}")
+
         log("navegando...")
         driver.get(URL)
         time.sleep(2)
@@ -197,6 +227,12 @@ def main():
         if solved:
             log("===== APOS VERIFICACAO: recarregando pra sair da tela de 'carregando' =====")
             time.sleep(2)
+            # igual o app: espera o firstScript terminar (fetch /che + service worker) antes de recarregar
+            try:
+                driver.execute_script("return window._waitNewPromise;")
+                log("  window._waitNewPromise aguardado (handshake /che + sw)")
+            except Exception as e:
+                log(f"  window._waitNewPromise indisponivel: {e}")
             driver.get(URL)   # igual o location.reload() que o FlareSolverr faz
             time.sleep(4)
             st_after = dump_state(driver, "100-apos-verificacao")

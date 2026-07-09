@@ -59,6 +59,9 @@ COPY src .
 COPY package.json ../
 # script de diagnostico (introspeccao do desafio Cloudflare) - roda com: docker exec ... python /app/diagnose-cf.py
 COPY diagnose-cf.py .
+# encaminhador de proxy com auth (Chrome -> 127.0.0.1 -> proxy residencial com login/senha)
+COPY proxy_forwarder.py .
+COPY start.sh .
 
 EXPOSE 8191
 EXPOSE 8192
@@ -66,7 +69,7 @@ EXPOSE 8192
 # dumb-init avoids zombie chromium processes
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-CMD ["/usr/local/bin/python", "-u", "/app/flaresolverr.py"]
+CMD ["/bin/sh", "/app/start.sh"]
 
 # Local build
 # docker build -t ngosang/flaresolverr:3.4.5 .

@@ -37,6 +37,9 @@ ACCESS_DENIED_SELECTORS = [
 CHALLENGE_TITLES = [
     # Cloudflare
     'Just a moment...',
+    # Cloudflare localizado (pt-BR) - servido quando o IP e brasileiro
+    'Um momento...',
+    'Um momento…',
     # DDoS-GUARD
     'DDoS-Guard'
 ]
