@@ -14,7 +14,7 @@ if [ "$SERVER_TYPE" = "servidor-caseiro" ]; then
         --network flare-net \
         --env-file ./.env \
         -p 8191:8191 \
-        -e LOG_LEVEL=silent \
+        -e LOG_LEVEL=info \
         -e LOG_HTML=false \
         -e TZ=America/Sao_Paulo \
         --memory="2g" \
@@ -30,7 +30,7 @@ else
         --name content-proxy-web-01 \
         --network caddy-net \
         --env-file ./.env \
-        -e LOG_LEVEL=silent \
+        -e LOG_LEVEL=info \
         -e LOG_HTML=false \
         --memory="500m" \
         --memory-swap="4500m" \
