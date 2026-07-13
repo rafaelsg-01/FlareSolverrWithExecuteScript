@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import sys
+import threading
 
 import certifi
 from bottle import run, response, Bottle, request, ServerAdapter
@@ -19,6 +20,9 @@ env_proxy_username = os.environ.get('PROXY_USERNAME', None)
 env_proxy_password = os.environ.get('PROXY_PASSWORD', None)
 env_token = os.environ.get('TOKEN_PROXY_WEB', None)
 env_initial_url = os.environ.get('INITIAL_URL', None)
+# Se 'false', o warm-up (session01 + request no redecanais via proxy) NAO roda no boot;
+# passa a ser feito sob demanda, na 1a request externa autenticada (modo hibernacao).
+env_warmup_on_boot = os.environ.get('WARMUP_ON_BOOT', 'true').lower() == 'true'
 
 
 def validate_token():
@@ -79,6 +83,10 @@ def controller_v1(request_json_internal=None):
         if not validate_token():
             return json.dumps(dict(error='Unauthorized', status_code=401))
     data = request_json_internal or request.json or {}
+    # Modo hibernacao: na 1a request externa de conteudo (token ja validado acima), faz o
+    # warm-up (cria session01 + resolve o desafio) antes de processar. No-op se ja aquecido.
+    if request_json_internal is None and data.get('cmd') in ('request.get', 'request.post'):
+        ensure_warmup()
     if (('proxy' not in data or not data.get('proxy')) and env_proxy_url is not None and (env_proxy_username is None and env_proxy_password is None)):
         logging.info('Using proxy URL ENV')
         data['proxy'] = {"url": env_proxy_url}
@@ -90,6 +98,49 @@ def controller_v1(request_json_internal=None):
     if res.__error_500__:
         response.status = 500
     return utils.object_to_dict(res)
+
+
+_warmup_lock = threading.Lock()
+_warmup_done = False
+
+
+def run_initial_warmup():
+    """Cria a session01 e faz o request inicial no redecanais (usa o proxy)."""
+    if env_initial_url is None or env_initial_url == '':
+        return
+
+    logging.info('Creating initial session')
+    Js_firstScript = js_first_script.Js_firstScriptImport
+
+    initialSessionCreate = controller_v1(request_json_internal={
+        "cmd": "sessions.create",
+        "session": "session01",
+        "maxOptimization": True,
+        "firstScript": Js_firstScript
+    })
+    logging.info(f'Initial session created: {initialSessionCreate}')
+
+    logging.info('Creating initial request')
+    initialRequestGet = controller_v1(request_json_internal={
+        "cmd": "request.get",
+        "session": "session01",
+        "url": env_initial_url,
+        "maxTimeout": 240000,
+        "configured": True
+    })
+    logging.info(f'Initial request completed: {initialRequestGet}')
+
+
+def ensure_warmup():
+    """Garante que o warm-up rodou uma vez so (thread-safe)."""
+    global _warmup_done
+    if _warmup_done:
+        return
+    with _warmup_lock:
+        if _warmup_done:
+            return
+        run_initial_warmup()
+        _warmup_done = True
 
 
 if __name__ == "__main__":
@@ -157,27 +208,10 @@ if __name__ == "__main__":
     prometheus_plugin.setup()
     app.install(prometheus_plugin.prometheus_plugin)
 
-    if env_initial_url is not None and env_initial_url != '':
-        logging.info('Creating initial session')
-        Js_firstScript = js_first_script.Js_firstScriptImport
-
-        initialSessionCreate = controller_v1(request_json_internal={
-            "cmd": "sessions.create",
-            "session": "session01",
-            "maxOptimization": True,
-            "firstScript": Js_firstScript
-        })
-        logging.info(f'Initial session created: {initialSessionCreate}')
-
-        logging.info('Creating initial request')
-        initialRequestGet = controller_v1(request_json_internal={
-            "cmd": "request.get",
-            "session": "session01",
-            "url": env_initial_url,
-            "maxTimeout": 240000,
-            "configured": True
-        })
-        logging.info(f'Initial request completed: {initialRequestGet}')
+    if env_warmup_on_boot:
+        ensure_warmup()
+    else:
+        logging.info('Modo hibernacao: warm-up adiado ate a 1a request externa autenticada (WARMUP_ON_BOOT=false).')
 
     # start webserver
     # default server 'wsgiref' does not support concurrent requests
