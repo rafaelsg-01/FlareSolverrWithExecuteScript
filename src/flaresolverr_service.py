@@ -112,7 +112,24 @@ def health_endpoint() -> HealthResponse:
 
 def controller_v1_endpoint(req: V1RequestBase) -> V1ResponseBase:
     start_ts = int(time.time() * 1000)
-    logging.info(f"Incoming request => POST /v1 body: {utils.object_to_dict(req)}")
+
+    # \/ Logging \/
+    req_dict = utils.object_to_dict(req)
+
+    # Cria uma cópia para não alterar os dados originais da requisição (opcional, mas recomendado)
+    log_body = req_dict.copy()
+
+    # Verifica se o comando é 'sessions.create' e se 'firstScript' existe no dicionário
+    if log_body.get('cmd') == 'sessions.create' and 'firstScript' in log_body:
+        first_script = log_body['firstScript']
+        # Garante que é uma string e trunca se for maior que 500 caracteres
+        if isinstance(first_script, str) and len(first_script) > 500:
+            log_body['firstScript'] = first_script[:500] + "... [TRUNCATED]"
+
+    # Imprime o log com o dicionário tratado
+    logging.info(f"Incoming request => POST /v1 body: {log_body}")
+    # /\ Logging /\
+
     res: V1ResponseBase
     try:
         res = _controller_v1_handler(req)

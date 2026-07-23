@@ -16,7 +16,7 @@ const TOKEN = process.env.TOKEN_PROXY_WEB || '';
 
 const vid = process.argv[2] || 'APNSUSWT02EP11';
 const gid = process.argv[3] || '0B265dpk7MD54MlZmTEZuaENLczQ';
-const path = `/player3/server.php?categoria=vod&server=RCServer05&subfolder=ondemand&vid=${vid}&gid=${gid}`;
+const path = `/player3/server.php?categoria=vod&server=RCServer05&subfolder=ondemand&vid=APNSUSWT02EP15&gid=0B265dpk7MD54aVNnaXFYeUNvZ3c`;
 
 // Este corpo e exatamente o mesmo que voce cola no console do navegador
 // (la ele vai dentro de um (async () => { ... })(); aqui vai cru, o directJs embrulha).
@@ -28,8 +28,7 @@ const VARS = [
   'VIDEO_URL_POST_BASE64_VkNfU0VfRlVERVVfT1RBUklPX1ZBX1BST0NVUkFSX0VNX09VVFJPX0xVR0FS'
 ];
 
-const PATH = (typeof args !== 'undefined' && args && args.path)
-  || '/player3/server.php?categoria=vod&server=RCServer05&subfolder=ondemand&vid=APNSUSWT02EP11&gid=0B265dpk7MD54MlZmTEZuaENLczQ';
+const PATH = '${path}';
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -74,6 +73,7 @@ return encontrados;
   });
 
   const data = await res.json();
+  console.log('data :', JSON.parse(data.solution.response));
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
 
   if (data.status !== 'ok') {
