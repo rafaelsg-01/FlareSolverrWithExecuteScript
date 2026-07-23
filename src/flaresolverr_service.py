@@ -1,6 +1,8 @@
+import json
 import logging
 import platform
 import sys
+import threading
 import time
 from datetime import timedelta
 from html import escape
@@ -54,6 +56,21 @@ CHALLENGE_SELECTORS = [
 SHORT_TIMEOUT = 1
 SESSIONS_STORAGE = SessionsStorage()
 
+# Fila do directJs: um lock por sessao, para que so um directJs rode por aba de cada vez.
+# Atencao: a fila cobre APENAS o directJs. Um directFetch que recebe nao-2xx cai no caminho de
+# navegacao (driver.get("about:blank")) e um erro qualquer dispara o recovery (driver.quit()) -
+# ambos apagam o window de um directJs em execucao. Risco conhecido e aceito.
+_JS_LOCKS = {}
+_JS_LOCKS_GUARD = threading.Lock()
+
+
+def _get_js_lock(session_id: str) -> threading.Lock:
+    key = session_id or '__no_session__'
+    with _JS_LOCKS_GUARD:
+        if key not in _JS_LOCKS:
+            _JS_LOCKS[key] = threading.Lock()
+        return _JS_LOCKS[key]
+
 
 def test_browser_installation():
     logging.info("Testing web browser installation...")
@@ -95,7 +112,7 @@ def health_endpoint() -> HealthResponse:
 
 def controller_v1_endpoint(req: V1RequestBase) -> V1ResponseBase:
     start_ts = int(time.time() * 1000)
-    logging.info(f"Incoming request => POST /v1 body: {{**utils.object_to_dict(req), 'firstScript': utils.object_to_dict(req).get('firstScript', '')[:50]}}")
+    logging.info(f"Incoming request => POST /v1 body: {{**utils.object_to_dict(req), 'firstScript': utils.object_to_dict(req).get('firstScript', '')[:50], 'directJs': utils.object_to_dict(req).get('directJs', '')[:200]}}")
     res: V1ResponseBase
     try:
         res = _controller_v1_handler(req)
@@ -387,10 +404,104 @@ def direct_fetch(driver: WebDriver, url: str, redirect_manual: bool = False, bod
 
     return result
 
+# O codigo do cliente entra verbatim como corpo de uma funcao async (nao como string literal),
+# entao nao existe problema de escape com aspas, crases ou ${}.
+# O cliente pode usar `return` direto no topo (com `await` a vontade) ou declarar uma funcao
+# `main` - se o corpo nao retornar nada, `main(args)` e chamada automaticamente.
+_DIRECT_JS_WRAPPER = """
+const args = arguments[0];
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const waitFor = async (fn, opts) => {
+    opts = opts || {};
+    const timeout = opts.timeout || 30000;
+    const interval = opts.interval || 100;
+    const start = Date.now();
+    for (;;) {
+        let v;
+        try { v = await fn(); } catch (e) { v = undefined; }
+        if (v) return v;
+        if (Date.now() - start > timeout)
+            throw new Error('waitFor timeout after ' + timeout + 'ms');
+        await sleep(interval);
+    }
+};
+const __exec = async () => {
+%s
+    ;
+    if (typeof main === 'function') return await main(args);
+    return null;
+};
+return __exec().then(
+    (v) => {
+        try { return JSON.stringify({__ok: true, value: v === undefined ? null : v}); }
+        catch (e) { return JSON.stringify({__ok: false, error: 'directJs result is not JSON-serializable: ' + e}); }
+    },
+    (e) => JSON.stringify({__ok: false, error: (e && (e.stack || e.message)) || String(e)})
+);
+"""
+
+def direct_js(driver: WebDriver, code: str, args, timeout_s: float) -> str:
+    """Executa `code` na aba atual e devolve o JSON do valor retornado.
+    A serializacao entre chamadas concorrentes e responsabilidade do chamador.
+    Levanta Exception se o JS falhar."""
+    script = _DIRECT_JS_WRAPPER % code
+
+    # O ChromeDriver aguarda a Promise retornada, mas aplica o script timeout (30 s por padrao),
+    # que cortaria um loop de espera mais longo.
+    driver.set_script_timeout(timeout_s)
+    try:
+        raw = driver.execute_script(script, args)
+    finally:
+        try:
+            driver.set_script_timeout(30)
+        except Exception:
+            pass
+        try:
+            driver.execute_cdp_cmd("HeapProfiler.collectGarbage", {})
+        except Exception:
+            pass
+
+    envelope = json.loads(raw)
+    if not envelope.get('__ok'):
+        raise Exception('directJs error: ' + str(envelope.get('error')))
+
+    return json.dumps(envelope.get('value'))
+
 def _evil_logic(req: V1RequestBase, driver: WebDriver, method: str) -> ChallengeResolutionT:
     res = ChallengeResolutionT({})
     res.status = STATUS_OK
     res.message = ""
+
+    isDirectJs = req.directJs is not None and req.directJs != ""
+
+    if isDirectJs:
+        # margem de 2 s para o JS estourar com um erro limpo antes do func_timeout matar a thread
+        js_timeout = max(5.0, int(req.directJsTimeout or req.maxTimeout) / 1000 - 2)
+
+        lock = _get_js_lock(req.session)
+        acquired = False
+        try:
+            logging.info('directJs: waiting in the queue...')
+            # espera em polling: uma thread parada em acquire() sem timeout nao receberia a
+            # excecao assincrona do func_timeout
+            while not lock.acquire(timeout=0.5):
+                pass
+            acquired = True
+            logging.info('directJs: executing...')
+            result_json = direct_js(driver, req.directJs, req.directJsArgs, js_timeout)
+        finally:
+            if acquired:
+                lock.release()
+
+        challenge_res = ChallengeResolutionResultT({})
+        challenge_res.url = driver.current_url
+        challenge_res.status = 200
+
+        challenge_res.headers = {}
+        challenge_res.response = result_json
+        res.result = challenge_res
+
+        return res
 
     isDirectFetch = req.directFetch is not None and req.directFetch != ""
 

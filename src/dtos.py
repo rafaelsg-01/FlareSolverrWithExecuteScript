@@ -52,6 +52,9 @@ class V1RequestBase(object):
     configured: bool = None
     redirectManual: bool = None
     directBody: str = None
+    directJs: str = None  # corpo de JS a executar na aba atual
+    directJsArgs = None  # qualquer valor JSON, exposto como `args` dentro do JS
+    directJsTimeout: int = None  # ms, default = maxTimeout
 
     def __init__(self, _dict):
         self.__dict__.update(_dict)
