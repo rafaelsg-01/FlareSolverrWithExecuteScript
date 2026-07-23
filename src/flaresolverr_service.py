@@ -112,7 +112,7 @@ def health_endpoint() -> HealthResponse:
 
 def controller_v1_endpoint(req: V1RequestBase) -> V1ResponseBase:
     start_ts = int(time.time() * 1000)
-    logging.info(f"Incoming request => POST /v1 body: {{**utils.object_to_dict(req), 'firstScript': utils.object_to_dict(req).get('firstScript', '')[:50], 'directJs': utils.object_to_dict(req).get('directJs', '')[:200]}}")
+    logging.info(f"Incoming request => POST /v1 body: {utils.object_to_dict(req)}")
     res: V1ResponseBase
     try:
         res = _controller_v1_handler(req)
