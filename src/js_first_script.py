@@ -41,6 +41,7 @@ if (!location.href.includes("#_disableFirstScript")) {
             })
         })
 
+        window._bigScriptString = """ + json.dumps(_BIG_SCRIPT) + """
     }
 
     // Set Headers Novibet (Cookie and Service Worker)

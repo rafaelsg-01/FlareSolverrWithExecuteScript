@@ -28,7 +28,8 @@ const VARS = [
   'VIDEO_URL_POST_BASE64_VkNfU0VfRlVERVVfT1RBUklPX1ZBX1BST0NVUkFSX0VNX09VVFJPX0xVR0FS'
 ];
 
-const PATH = '${path}';
+const PATH = (typeof args !== 'undefined' && args && args.path)
+  || '/player3/server.php?categoria=vod&server=RCServer05&subfolder=ondemand&vid=APNSUSWT02EP11&gid=0B265dpk7MD54MlZmTEZuaENLczQ';
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
