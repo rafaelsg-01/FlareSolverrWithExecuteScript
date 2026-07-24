@@ -43,42 +43,5 @@ if (!location.href.includes("#_disableFirstScript")) {
 
         window._bigScriptString = """ + json.dumps(_BIG_SCRIPT) + """
     }
-
-    // Set Headers Novibet (Cookie and Service Worker)
-    if (location.href.includes("#_execScript_setHeadersNovibet")) {
-        console.log('Exec -> _execScript_setHeadersNovibet')
-
-        window._waitNewPromise = new Promise((resolve) => {
-            const pFetch = fetch("https://www.novibet.bet.br/ngapi/desktop/pt/userAccount/registration-get-model", {
-                    "headers": {
-                        "content-type": "application/json"
-                    },
-                    "body": JSON.stringify({
-                        "bannerModel": {
-                            "affiliateId": null,
-                            "channel": "desktop",
-                            "folderPath": "site-banners/registration-banners",
-                            "path": "default",
-                            "landingId": null,
-                            "pageType": "sports"
-                        },
-                        "affiliationModel": {
-                            "affC": null,
-                            "btagC": null,
-                            "campC": null,
-                            "promoCode": null
-                        }
-                    }),
-                    "method": "POST"
-                })
-                .then(() => console.log("Fetch /novibet completed"))
-                .catch((e) => console.error("Fetch error: " + e))
-
-            Promise.allSettled([pFetch]).then(() => {
-                console.log("All processes completed.")
-                resolve(true)
-            })
-        })
-    }
 }
 """
